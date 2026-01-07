@@ -1,0 +1,186 @@
+import numpy as np
+import scipy
+import sys
+sys.path.append('./cqToolbox')
+#from spectral_Galerkin import spectral_galerkin_matrices,project_legendre_from_values,precomp_project,project_legendre
+from numpy.polynomial.legendre import leggauss, legval, legder
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+from finite_difference_cn_helpers import finite_difference_matrices
+from mfe_helpers_finite_differences import create_rhs,time_harmonic_solve,make_mfe_sol
+from cqToolbox.linearcq import Conv_Operator
+
+from mfe_ref_fd import td_solver
+
+
+mpl.rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif",
+    "font.serif": ["Computer Modern Roman"],
+})
+
+Nx = 30
+
+#rho = 0.4
+#eps = 0.0001
+def f(x,t):
+    t0 = 1
+    return np.exp(-20*x**2)*np.exp(-10*(t-t0)**2)
+
+deg = 50
+x_g,w   = leggauss(deg)
+
+nxplot=200
+xx = np.linspace(-1,1,nxplot)
+T = 3
+## Compute reference solution
+#Ntref = 13*2**7
+Ntref = 1000
+tauref = T*1.0/Ntref
+for rhoind in range(1):
+    for epsind in range(1):
+        rho = 0.45*2**(-rhoind)
+        #rho = 0.4*2**(-rhoind)
+        #rho = 0.4*2**(-rhoind)
+        eps = 0.1*10**(-epsind)
+        #eps = 0.01*10**(-epsind)
+        def eta(t):
+            return 1+2*rho*np.cos(t/eps)
+        refs = td_solver(f,eta,T,Ntref,Nx,None,None,deg=50)
+        plt.figure()
+        plt.imshow(np.real(refs),aspect='auto')
+        plt.colorbar()
+        plt.savefig('plots/ref_rho'+str(rho)+'_eps'+str(eps)+'.pdf')
+        plt.close()
+        print('Reference solution plotted.')
+        #mfe_refs = refs
+#        mfe_refs,z_K = make_mfe_sol(rho,eps,Ntref,T,Nx,K,f,deg,xx)
+        Am_Nt = 8
+        precomp = finite_difference_matrices(Nx) 
+
+        Nts  = np.zeros((Am_Nt,))
+        cn_errs = np.zeros((Am_Nt,))
+        mfe_errs = np.zeros((Am_Nt,))
+        mfe_cn_diff = np.zeros((Am_Nt,))
+        for j in range(Am_Nt):
+            Nt = Ntref
+            K  = 2*j+1
+            Nts[j]  = K
+            tau = T*1.0/Nt
+            CN_vals = td_solver(f,eta,T,Nt,Nx,None,None,deg=deg)
+            rhs = create_rhs(Nt,T,Nx,K,f,precomp = precomp,deg=deg)
+            speed = int(Ntref/Nt)
+        
+            mfe_vals = CN_vals
+            mfe_vals,z_K = make_mfe_sol(rho,eps,Nt,T,Nx,K,f,deg,xx)
+            mfe_errs[j] = 1.0/np.sqrt(Nt*len(xx))*np.linalg.norm(refs[:,::speed]-mfe_vals)
+            cn_errs[j] = 1.0/np.sqrt(Nt*len(xx))*np.linalg.norm(refs[:,::speed]-CN_vals)
+            print("MFE error: ",mfe_errs)
+            print("CN error: ",cn_errs)
+            mfe_cn_diff[j]= 1.0/np.sqrt(Nt*len(xx))*np.linalg.norm(mfe_vals-CN_vals)
+
+            plt.figure()
+           # plt.subplot(2,1,1)
+           # plt.imshow(np.real(mfe_vals),aspect='auto')
+           # #plt.clim([-2,2])
+           # plt.colorbar()
+           # plt.subplot(2,1,2)
+           # plt.imshow(np.real(CN_vals),aspect='auto')
+           # #plt.clim([-2,2])
+           # plt.colorbar()
+           # plt.subplot(3,1,3)
+           # plt.semilogy(np.linalg.norm(mfe_vals-CN_vals,axis = 0))
+           # tt = np.linspace(0,T,Nt+1) 
+           # plt.semilogy(10**(-6)*np.exp(1.0/np.pi*rho/eps*tt),linestyle='dashed')
+           # #plt.imshow(np.log(np.abs(mfe_vals-CN_vals)),aspect='auto')
+           # #plt.clim([-0.5,0.5])
+           # #plt.colorbar()
+           # plt.savefig('plots/visualization_rho'+str(rho)+'_eps'+str(eps)+'.pdf')
+           # plt.close()
+
+ 
+        #plt.figure() 
+        #plt.semilogy(rho**(np.abs(np.arange(-K,K+1,1))),linestyle='dashed')
+
+        #plt.semilogy(np.array([1.0/np.sqrt(Nt*Nx)*np.linalg.norm(z_K[k*Nx:(k+1)*Nx,:]) for k in range(2*K+1)]))
+        #plt.semilogy((rho*eps)**(np.abs(np.arange(-K,K+1,1))),linestyle='dashed')
+        #plt.savefig('z_Ks.pdf')
+        #plt.close()
+
+
+
+      # Paper-ready plot style
+
+      # --- Matlab-like styling ---
+        mpl.rcParams.update({
+            'font.family': 'sans-serif',
+            'font.size': 12,
+            'axes.linewidth': 1.2,
+            'axes.labelsize': 12,
+            'axes.titlesize': 13,
+            'xtick.direction': 'out',
+            'ytick.direction': 'out',
+            'xtick.major.width': 1.0,
+            'ytick.major.width': 1.0,
+            'lines.linewidth': 1.6,
+            'lines.markersize': 6,
+            'grid.linestyle': '--',
+            'grid.linewidth': 0.6,
+        })
+        
+        # Matlab default color cycle
+        mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=[
+            '#0072BD', '#D95319', '#EDB120', '#7E2F8E', '#77AC30', '#4DBEEE', '#A2142F'
+        ])
+        
+        plt.figure(figsize=(6, 4), dpi=300)
+        
+        # Main curves
+        plt.semilogy(Nts, mfe_errs, '-o', label='MFE-TR')
+        plt.semilogy( Nts, cn_errs, '-s', label='TR')
+        
+        # Reference slopes
+        #plt.loglog(T / Nts, T / Nts, '--', label=r'$h$')
+        plt.semilogy( Nts, (2*T*rho*eps)**Nts, '--', label=r'$(2T\rho\varepsilon)^K$')
+        
+        # Labels and axis limits
+        plt.title(r'$K$ convergence')
+        plt.xlabel(r'Number of harmonics $K$')
+        plt.ylabel(r'$L^2-$Error')
+        #plt.ylim(1e-5, 2e-1)
+        
+        # Grid + legend
+        plt.grid(True, which='both')
+        plt.legend()
+        
+        plt.tight_layout()
+       # plt.figure(figsize=(6, 4), dpi=300)
+       # 
+       # plt.loglog(T / Nts, mfe_errs, label='MFE', linewidth=2)
+       # plt.loglog(T / Nts, cn_errs, label='CN', linewidth=2)
+       # 
+       # # Reference slopes
+       # #plt.loglog(T / Nts, T / Nts, '--', label=r'$\tau$', linewidth=1.5)
+       # plt.loglog(T / Nts, (T / Nts)**2, '--', label=r'$\tau^2$', linewidth=1.5)
+       # 
+       # # Labels, legend, formatting
+       # plt.xlabel('Time step size $h$', fontsize=12)
+       # plt.ylabel('Error', fontsize=12)
+       # plt.title('Convergence of MFE and CN Schemes', fontsize=13)
+       # 
+       # plt.grid(True, which='both', ls=':', alpha=0.7)
+       # plt.legend(fontsize=11)
+       # 
+       # plt.tight_layout()
+       # plt.figure()
+       # plt.loglog(T*1.0/Nts,mfe_errs,label='MFE')
+       # plt.loglog(T*1.0/Nts,cn_errs,label='CN')
+       # #plt.loglog(T*1.0/Nts,mfe_cn_diff,label='CN-MFE')
+       # plt.loglog(T*1.0/Nts,(T*1.0/Nts),label='h',linestyle='dashed')
+       # plt.loglog(T*1.0/Nts,(T*1.0/Nts)**2,label='h^2',linestyle='dashed')
+       # plt.legend()
+        plt.savefig('plots/K_convergence_rho'+str(rho)+'_eps'+str(eps)+'.pdf')
+        plt.close()
+        
+       #breakpoint()
+        #vals = np.array([f(xx,tau*j) for j in range(Nt+1)]).T
