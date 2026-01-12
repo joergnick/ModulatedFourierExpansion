@@ -2,6 +2,10 @@ import numpy as np
 import scipy
 import sys
 sys.path.append('./cqToolbox')
+
+import scipy.sparse.linalg
+from scipy.sparse import lil_matrix
+
 #from spectral_Galerkin import spectral_galerkin_matrices,project_legendre_from_values,precomp_project,project_legendre
 from finite_difference_cn_helpers import finite_difference_matrices
 from numpy.polynomial.legendre import leggauss, legval, legder
@@ -14,8 +18,13 @@ def time_harmonic_solve(s,f_hat,K,Nx,rho,eps,precomp=None):
     else:
         A,M,Bl,Br = precomp[0],precomp[1],precomp[2],precomp[3]
     # Create T_A
-    D_K = 1j*np.zeros(((2*K+1)*Nx,(2*K+1)*Nx))
-    T_A = 1j*np.zeros(((2*K+1)*Nx,(2*K+1)*Nx))
+    #D_K = 1j*np.zeros(((2*K+1)*Nx,(2*K+1)*Nx))
+    #T_A = 1j*np.zeros(((2*K+1)*Nx,(2*K+1)*Nx))
+    D_K = lil_matrix(((2*K+1)*Nx,(2*K+1)*Nx), dtype=np.complex128 )
+    T_A = lil_matrix(((2*K+1)*Nx,(2*K+1)*Nx), dtype=np.complex128 )
+    #D_K = 1j*np.zeros(((2*K+1)*Nx,(2*K+1)*Nx))
+    #T_A = 1j*np.zeros(((2*K+1)*Nx,(2*K+1)*Nx))
+ 
     for j in range(2*K+1):
         T_A[j*Nx:(j+1)*Nx,j*Nx:(j+1)*Nx] = A
         D_K[j*Nx:(j+1)*Nx,j*Nx:(j+1)*Nx] = (s+1j*(j-K)/eps)**2*M
@@ -23,7 +32,8 @@ def time_harmonic_solve(s,f_hat,K,Nx,rho,eps,precomp=None):
         T_A[j*Nx:(j+1)*Nx,(j+1)*Nx:(j+2)*Nx] = rho * A
         T_A[(j+1)*Nx:(j+2)*Nx,j*Nx:(j+1)*Nx] = rho * A
     LHS = D_K+T_A
-    x_hat = np.linalg.solve(LHS,f_hat)
+    x_hat = scipy.sparse.linalg.spsolve(LHS.tocsr(),f_hat)
+    #x_hat = np.linalg.solve(LHS,f_hat)
     return x_hat
 
 

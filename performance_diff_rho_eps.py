@@ -17,49 +17,51 @@ mpl.rcParams.update({
     "font.serif": ["Computer Modern Roman"],
 })
 
-K = 5
-Nx = 20
+K = 2
+Nx = 1000
 etas = np.zeros((2*K+1,))
 
 #rho = 0.4
 #eps = 0.0001
 def f(x,t):
-    t0 = 1
+    t0 = 2
     #return np.exp(-10*x**2)*np.exp(-5*(t-t0)**2)
-    a = 20
-    b = 20
+    a = 100
+    b = 10
     return np.exp(-a*(x-0.5)**2)*np.exp(-b*(t-t0)**2)-np.exp(-a*(x-0.5)**2)*np.exp(-b*(t-t0-0.1)**2)
 
 xx = np.linspace(0,1,Nx)
-T = 3
+T = 5
 ## Compute reference solution
 #Ntref = 13*2**7
-Ntref = 2**10
+Ntref = 2**12
 tauref = T*1.0/Ntref
-Am_rho = 2
-Am_eps = 2
+Am_rho = 3
+Am_eps = 4
 perf = np.zeros((Am_rho,Am_eps))
-
+Am_Nt = 9
+taus = np.zeros((Am_Nt,))
 for rhoind in range(Am_rho):
     for epsind in range(Am_eps):
         rho = 0.4*2**(-rhoind)
         #rho = 0.4*2**(-rhoind)
-        eps = 0.2*2**(-epsind)
+        eps = 0.1*10**(-epsind)
         print('######## NEW RUN, rho = '+str(rho)+', eps = '+str(eps)+' ###############')
         #eps = 0.01*10**(-epsind)
         def eta(t):
             return 1+2*rho*np.cos(t/eps)
         refs = td_solver(f,eta,T,Ntref,Nx,None,None,deg=50)
         #refs,z_K = make_mfe_sol(rho,eps,Ntref,T,Nx,K,f,-1,-1)
-        Am_Nt = 7
         
         Nts  = np.zeros((Am_Nt,))
         cn_errs = np.zeros((Am_Nt,))
         mfe_errs = np.zeros((Am_Nt,))
         mfe_cn_diff = np.zeros((Am_Nt,))
+        res = {}
         for j in range(Am_Nt):
             Nt = 8*2**j
             tau = T*1.0/Nt
+            taus[j] = tau
             CN_vals = td_solver(f,eta,T,Nt,Nx,None,None,deg=-1)
             rhs = create_rhs(Nt,T,Nx,K,f,precomp = None,deg=-1)
             speed = int(Ntref/Nt)
@@ -68,8 +70,7 @@ for rhoind in range(Am_rho):
             mfe_vals,z_K = make_mfe_sol(rho,eps,Nt,T,Nx,K,f,-1,xx)
             mfe_errs[j] = 1.0/np.sqrt(Nt*len(xx))*np.linalg.norm(refs[:,::speed]-mfe_vals)
             cn_errs[j] = 1.0/np.sqrt(Nt*len(xx))*np.linalg.norm(refs[:,::speed]-CN_vals)
-            print('MFE errs: ',mfe_errs)
-            print('CN errs: ',cn_errs)
+
             mfe_cn_diff[j]= 1.0/np.sqrt(Nt*len(xx))*np.linalg.norm(mfe_vals-CN_vals)
 
             plt.figure()
@@ -89,25 +90,34 @@ for rhoind in range(Am_rho):
             plt.savefig('plots/approxs_'+str(j)+'.pdf')
             plt.close()
 
-            plt.figure()
-            tt = np.linspace(0,T,Nt+1)
-            plt.semilogy(tt,np.linalg.norm(CN_vals,axis=0))
-            plt.semilogy(tt,10**(-5)*np.exp(rho/eps*tt),linestyle='dashed')
-            plt.savefig('plots/exponential_growth_CN'+str(j)+'.pdf')
-            plt.close()
+            #plt.figure()
+            #tt = np.linspace(0,T,Nt+1)
+            #plt.semilogy(tt,np.linalg.norm(CN_vals,axis=0))
+            #plt.semilogy(tt,10**(-5)*np.exp(rho/eps*tt),linestyle='dashed')
+            #plt.savefig('plots/exponential_growth_CN'+str(j)+'.pdf')
+            #plt.close()
  
-            plt.figure() 
-            plt.semilogy(rho**(np.abs(np.arange(-K,K+1,1))),linestyle='dashed')
-
-            plt.semilogy(np.array([1.0/np.sqrt(Nt*Nx)*np.linalg.norm(z_K[k*Nx:(k+1)*Nx,:]) for k in range(2*K+1)]))
-            plt.semilogy((rho*eps)**(np.abs(np.arange(-K,K+1,1))),linestyle='dashed')
-            plt.savefig('plots/z_Ks_rho_'+str(rho)+'_eps_'+str(eps)+'.pdf')
-            plt.close()
+            #plt.figure() 
+            #plt.semilogy(rho**(np.abs(np.arange(-K,K+1,1))),linestyle='dashed')
+            #plt.semilogy(np.array([1.0/np.sqrt(Nt*Nx)*np.linalg.norm(z_K[k*Nx:(k+1)*Nx,:]) for k in range(2*K+1)]))
+            #plt.semilogy((rho*eps)**(np.abs(np.arange(-K,K+1,1))),linestyle='dashed')
+            #plt.savefig('plots/z_Ks_rho_'+str(rho)+'_eps_'+str(eps)+'.pdf')
+            #plt.close()
+        print('MFE errs: ',mfe_errs)
+        print('CN errs: ',cn_errs)
         # Ideal rho and eps
-        perf[rhoind,epsind] = np.log(np.min(mfe_errs/(cn_errs+10**(-13))))
-        print('Performance table:' + perf)
-
-
+        perf[rhoind,epsind] = np.min(mfe_errs/(cn_errs+10**(-13)))
+        print('Performance table:')
+        print(perf)
+        res = {'mfe_errs' : mfe_errs,
+               'cn_errs'  : cn_errs,
+               'rho'      : rho,
+               'eps'      : eps,
+               'taus'     : taus,
+               'T'        : T
+                }
+        
+        np.save('data/errs_rho_'+str(rho)+'_eps_'+str(eps)+'.npy',res,allow_pickle=True)
       # Paper-ready plot style
 
       # --- Matlab-like styling ---

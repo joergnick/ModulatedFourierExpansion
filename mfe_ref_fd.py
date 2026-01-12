@@ -49,11 +49,17 @@ def td_solver(f,eta,T,Nt,Nx,ui,vi,deg=40,return_sg = False,nx = 200):
     if ui is not None:
         sol[:Nx,0]     = ui(x_g)
         sol[Nx:2*Nx,0] = vi(x_g)
-    #LHS = lil_matrix((2*Nx, 2*Nx))
-    #RHS = lil_matrix((2*Nx, 2*Nx))
-    LHS = np.zeros((2*Nx,2*Nx))
-    RHS = np.zeros((2*Nx,2*Nx))
+    LHS = lil_matrix((2*Nx, 2*Nx))
+    RHS = lil_matrix((2*Nx, 2*Nx))
+    #LHS = np.zeros((2*Nx,2*Nx))
+    #RHS = np.zeros((2*Nx,2*Nx))
     source = np.zeros((2*Nx,))
+    LHS[:Nx,Nx:2*Nx] = tau**(-1)*M 
+    LHS[Nx:2*Nx,:Nx] = tau**(-1)*M
+    LHS[Nx:2*Nx,Nx:2*Nx] = -1.0/2*M
+    RHS[:Nx,Nx:2*Nx] = tau**(-1)*M 
+    RHS[Nx:2*Nx,:Nx] = tau**(-1)*M
+    RHS[Nx:2*Nx,Nx:2*Nx] = 0.5*M
     for j in range(Nt):
         tj = j*tau
         tjp1 = tj+tau
@@ -61,17 +67,10 @@ def td_solver(f,eta,T,Nt,Nx,ui,vi,deg=40,return_sg = False,nx = 200):
             1
             #print("Index: "+str(j))
         LHS[:Nx,:Nx]     = 0.5*eta(tjp1)*A
-        LHS[:Nx,Nx:2*Nx] = tau**(-1)*M 
-        LHS[Nx:2*Nx,:Nx] = tau**(-1)*M
-        LHS[Nx:2*Nx,Nx:2*Nx] = -1.0/2*M
-    
         RHS[:Nx,:Nx]     = -0.5*eta(tj)*A
-        RHS[:Nx,Nx:2*Nx] = tau**(-1)*M 
-        RHS[Nx:2*Nx,:Nx] = tau**(-1)*M
-        RHS[Nx:2*Nx,Nx:2*Nx] = 0.5*M
         source[:Nx] = 0.5*(bs[j]+bs[j+1]) 
-        #sol[:,j+1] = scipy.sparse.linalg.spsolve(LHS, RHS @ sol[:,j]+source)
-        sol[:,j+1] = np.linalg.solve(LHS,np.matmul(RHS,sol[:,j])+source)
+        sol[:,j+1] = scipy.sparse.linalg.spsolve(LHS.tocsr(), RHS @ sol[:,j]+source)
+        #sol[:,j+1] = np.linalg.solve(LHS,np.matmul(RHS,sol[:,j])+source)
 
         #from scipy.linalg import svdvals
         #e = svdvals(np.abs(LHS))
@@ -79,7 +78,6 @@ def td_solver(f,eta,T,Nt,Nx,ui,vi,deg=40,return_sg = False,nx = 200):
         #plt.semilogy(np.sort(np.abs(e)))
         #plt.show()
         #breakpoint()
-    print("Finished computation")
 
     xx = x_g
     tt = np.linspace(0,T,Nt+1)
@@ -88,7 +86,6 @@ def td_solver(f,eta,T,Nt,Nx,ui,vi,deg=40,return_sg = False,nx = 200):
     #    #vals[:,j] = legval(xx,usol[:,j]) + (tau*j)**2*np.cos(xx)
     #    vals[:,j+1] = legval(xx,usol[:,j+1])
     vals = np.array([sol[:Nx,j] for j in range(Nt+1)]).T
-    print("VALS shape: ",vals.shape)
     #ex = np.array([(j*tau)**2*np.exp(-c*xx**2) for j in range(Nt+1)]).T
     #vals = vals-ex
     #from matplotlib.colors import LogNorm
@@ -102,15 +99,16 @@ def td_solver(f,eta,T,Nt,Nx,ui,vi,deg=40,return_sg = False,nx = 200):
     return vals
 #
 #import time
-#
+
 #start = time.time()
 #rho = 0.1
 #eps = 0.1
 #def eta(t):
 #    return 1+2*rho*np.cos(t/eps)
-#vals = td_solver(f,eta,5,2000,200,ui,vi)
+#vals = td_solver(f,eta,5,200,200,ui,vi)
 #end = time.time()
 #print('duration: ',end-start)
+
 #import matplotlib.pyplot as plt
 #plt.imshow(np.real(vals),aspect='auto')
 #plt.colorbar()

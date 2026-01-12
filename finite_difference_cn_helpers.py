@@ -31,7 +31,8 @@ def mass_matrix(N, h):
     M[:, -1] = 0
     M[0, 0] = 1
     M[-1, -1] = 1
-    return M.toarray()
+    return M
+    #return M.toarray()
 
 #def mass_matrix(N, h):
 #    M = np.zeros((N, N))
@@ -76,9 +77,8 @@ def stiffness_matrix(N, h):
 
     A[0, 0] = 1
     A[-1, -1] = 1
-
-    #return A
-    return A.toarray()
+    return A
+    #return A.toarray()
 
 
 def finite_difference_matrices(Nx):
@@ -122,8 +122,7 @@ def crank_nicolson_step_variable_c(h, c_func, dt, Nt, u0, v0, x):
     v = z[Nx:]
     return u, v
 def poisson_test():
-    start = time.time()
-    Nx = 200
+    Nx = 10000
     A,M,_,_ = finite_difference_matrices(Nx)
     xx = np.linspace(0,1,Nx)
     def f(x):
@@ -134,6 +133,7 @@ def poisson_test():
     rhs = M @ f(xx)
     rhs[0] = rhs[-1] = 0
     
+    start = time.time()
     #u_sol = np.linalg.solve(A,rhs)
     u_sol = scipy.sparse.linalg.spsolve(A,rhs)
     end = time.time()
@@ -143,4 +143,4 @@ def poisson_test():
     plt.plot(u(xx),linestyle='dashed')
     plt.savefig('test_poisson.png')
     return 
-#poisson_test()
+poisson_test()
