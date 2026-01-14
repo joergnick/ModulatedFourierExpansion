@@ -10,6 +10,7 @@ from cqToolbox.linearcq import Conv_Operator
 
 from mfe_ref_fd import td_solver
 
+import time
 
 mpl.rcParams.update({
     "text.usetex": True,
@@ -17,7 +18,7 @@ mpl.rcParams.update({
     "font.serif": ["Computer Modern Roman"],
 })
 
-K = 3
+K = 2
 Nx = 1000
 etas = np.zeros((2*K+1,))
 
@@ -34,7 +35,7 @@ xx = np.linspace(0,1,Nx)
 T = 5
 ## Compute reference solution
 #Ntref = 13*2**7
-Ntref = 2**12
+Ntref = 2**14
 tauref = T*1.0/Ntref
 Am_rho = 1
 Am_eps = 1
@@ -45,12 +46,17 @@ for rhoind in range(Am_rho):
     for epsind in range(Am_eps):
         rho = 0.4*2**(-rhoind)
         #rho = 0.4*2**(-rhoind)
-        eps = 0.001*10**(-epsind)
+        eps = 0.01*10**(-epsind)
         print('######## NEW RUN, rho = '+str(rho)+', eps = '+str(eps)+' ###############')
         #eps = 0.01*10**(-epsind)
         def eta(t):
             return 1+2*rho*np.cos(t/eps)
+        start = time.time()
         refs = td_solver(f,eta,T,Ntref,Nx,None,None,deg=50)
+        end   = time.time()
+        print("Duration computation reference solution: ", end-start)
+        print("Computed reference solution.")
+
         #refs,z_K = make_mfe_sol(rho,eps,Ntref,T,Nx,K,f,-1,-1)
         
         Nts  = np.zeros((Am_Nt,))
@@ -60,14 +66,23 @@ for rhoind in range(Am_rho):
         res = {}
         for j in range(Am_Nt):
             Nt = 8*2**j
+            print("Computation: "+str(j+1)+" of "+str(Am_Nt)+" N = "+str(Nt))
             tau = T*1.0/Nt
             taus[j] = tau
+            start = time.time()
             CN_vals = td_solver(f,eta,T,Nt,Nx,None,None,deg=-1)
+            end = time.time()
+            print("Duration TR: "+str(end-start))
+
+            start = time.time()
             rhs = create_rhs(Nt,T,Nx,K,f,precomp = None,deg=-1)
             speed = int(Ntref/Nt)
-        
             Nts[j]  = Nt
             mfe_vals,z_K = make_mfe_sol(rho,eps,Nt,T,Nx,K,f,-1,xx)
+            end = time.time()
+
+            print("Duration MFE-TR: "+str(end-start))
+
             mfe_errs[j] = 1.0/np.sqrt(Nt*len(xx))*np.linalg.norm(refs[:,::speed]-mfe_vals)
             cn_errs[j] = 1.0/np.sqrt(Nt*len(xx))*np.linalg.norm(refs[:,::speed]-CN_vals)
 
@@ -96,8 +111,7 @@ for rhoind in range(Am_rho):
             #plt.semilogy(tt,10**(-5)*np.exp(rho/eps*tt),linestyle='dashed')
             #plt.savefig('plots/exponential_growth_CN'+str(j)+'.pdf')
             #plt.close()
- 
-            #plt.figure() 
+           #plt.figure() 
             #plt.semilogy(rho**(np.abs(np.arange(-K,K+1,1))),linestyle='dashed')
             #plt.semilogy(np.array([1.0/np.sqrt(Nt*Nx)*np.linalg.norm(z_K[k*Nx:(k+1)*Nx,:]) for k in range(2*K+1)]))
             #plt.semilogy((rho*eps)**(np.abs(np.arange(-K,K+1,1))),linestyle='dashed')
@@ -105,6 +119,9 @@ for rhoind in range(Am_rho):
             #plt.close()
         print('MFE errs: ',mfe_errs)
         print('CN errs: ',cn_errs)
+        print("||z^K_k|| :")
+        print(np.array([1.0/np.sqrt(Nt*Nx)*np.linalg.norm(z_K[k*Nx:(k+1)*Nx,:]) for k in range(2*K+1)]))
+ 
         # Ideal rho and eps
         perf[rhoind,epsind] = np.min(mfe_errs/(cn_errs+10**(-13)))
         print('Performance table:')

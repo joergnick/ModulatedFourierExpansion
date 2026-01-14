@@ -143,4 +143,3 @@ def poisson_test():
     plt.plot(u(xx),linestyle='dashed')
     plt.savefig('test_poisson.png')
     return 
-poisson_test()
