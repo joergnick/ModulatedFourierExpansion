@@ -71,29 +71,11 @@ def td_solver(f,eta,T,Nt,Nx,ui,vi,deg=40,return_sg = False,nx = 200):
         source[:Nx] = 0.5*(bs[j]+bs[j+1]) 
         sol[:,j+1] = scipy.sparse.linalg.spsolve(LHS.tocsr(), RHS @ sol[:,j]+source)
         #sol[:,j+1] = np.linalg.solve(LHS,np.matmul(RHS,sol[:,j])+source)
-
-        #from scipy.linalg import svdvals
-        #e = svdvals(np.abs(LHS))
-        #print(min(e))
-        #plt.semilogy(np.sort(np.abs(e)))
-        #plt.show()
-        #breakpoint()
-
     xx = x_g
     tt = np.linspace(0,T,Nt+1)
-    vals = np.zeros((Nx,Nt+1))
-    #for j in range(Nt):
-    #    #vals[:,j] = legval(xx,usol[:,j]) + (tau*j)**2*np.cos(xx)
-    #    vals[:,j+1] = legval(xx,usol[:,j+1])
-    vals = np.array([sol[:Nx,j] for j in range(Nt+1)]).T
-    #ex = np.array([(j*tau)**2*np.exp(-c*xx**2) for j in range(Nt+1)]).T
-    #vals = vals-ex
-    #from matplotlib.colors import LogNorm
-    #plt.figure()
-    ###plt.plot(xx,vals[:,-1])
-    ###plt.plot(xx,T**2*np.exp(-c*xx**2),linestyle='dashed')
-    #plt.imshow(vals,aspect = 0.1*(len(vals[0,:])/len(vals[:,0])), extent=[0,T,-1,1])
-    #plt.savefig('ref.pdf')
+    #vals = np.zeros((Nx,Nt+1))
+    vals = sol[:Nx,:]
+    #vals = np.array([sol[:Nx,j] for j in range(Nt+1)]).T
     if return_sg:
         return vals,sol,M,A
     return vals

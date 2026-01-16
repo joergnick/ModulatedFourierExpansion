@@ -36,7 +36,7 @@ def make_mfe_sol(rho,eps,Nt,T,Nx,K,f,deg,xx,return_sg=False):
         return x_hat
     td_sys = Conv_Operator(th_sys,order=-1)
     # CAREFUL OF INITIAL VALUES
-    z_K = td_sys.apply_convol_no_symmetry(rhs,T,show_progress = False,cutoff = 10**(-7))
+    z_K = td_sys.apply_convol_no_symmetry(rhs,T,show_progress = False,cutoff = 10**(-10))
     mfe_sol = 1j*np.zeros((Nx,Nt+1))
     for j in range(Nt+1):
         for k_ind in range(2*K+1):

@@ -35,7 +35,7 @@ xx = np.linspace(0,1,Nx)
 T = 5
 ## Compute reference solution
 #Ntref = 13*2**7
-Ntref = 2**14
+Ntref = 2**13
 tauref = T*1.0/Ntref
 Am_rho = 1
 Am_eps = 1
@@ -52,12 +52,14 @@ for rhoind in range(Am_rho):
         def eta(t):
             return 1+2*rho*np.cos(t/eps)
         start = time.time()
-        refs = td_solver(f,eta,T,Ntref,Nx,None,None,deg=50)
-        end   = time.time()
-        print("Duration computation reference solution: ", end-start)
+        #refs = td_solver(f,eta,T,Ntref,Nx,None,None,deg=50)
+        #np.save('data/ref.npy',refs)
+        #refs = np.load('data/ref.npy')
+        #end   = time.time()
+        #print("Duration computation reference solution: ", end-start)
         print("Computed reference solution.")
-
-        #refs,z_K = make_mfe_sol(rho,eps,Ntref,T,Nx,K,f,-1,-1)
+        Kref = 10
+        refs,z_K = make_mfe_sol(rho,eps,Ntref,T,Nx,K,f,-1,-1)
         
         Nts  = np.zeros((Am_Nt,))
         cn_errs = np.zeros((Am_Nt,))
@@ -117,8 +119,8 @@ for rhoind in range(Am_rho):
             #plt.semilogy((rho*eps)**(np.abs(np.arange(-K,K+1,1))),linestyle='dashed')
             #plt.savefig('plots/z_Ks_rho_'+str(rho)+'_eps_'+str(eps)+'.pdf')
             #plt.close()
-        print('MFE errs: ',mfe_errs)
-        print('CN errs: ',cn_errs)
+            print('MFE errs: ',mfe_errs)
+            print('CN errs: ',cn_errs)
         print("||z^K_k|| :")
         print(np.array([1.0/np.sqrt(Nt*Nx)*np.linalg.norm(z_K[k*Nx:(k+1)*Nx,:]) for k in range(2*K+1)]))
  
@@ -134,7 +136,7 @@ for rhoind in range(Am_rho):
                'T'        : T
                 }
         
-        np.save('data/errs_rho_'+str(rho)+'_eps_'+str(eps)+'.npy',res,allow_pickle=True)
+        np.save('data/errs_rho_'+str(rho)+'_eps_'+str(eps)+'_smallNx.npy',res,allow_pickle=True)
       # Paper-ready plot style
 
       # --- Matlab-like styling ---

@@ -2,7 +2,6 @@ import numpy as np
 from rkmethods import Extrapolator,RKMethod
 class Conv_Operator():
     tol=10**-14
-    #tol=10**-20
     external_N   = -1
     external_rho = None
     external_L = None
