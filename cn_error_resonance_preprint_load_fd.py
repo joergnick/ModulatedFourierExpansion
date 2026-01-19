@@ -37,11 +37,11 @@ T = 5
 #Ntref = 13*2**7
 Ntref = 2**12
 tauref = T*1.0/Ntref
-for rhoind in range(3):
-    for epsind in range(3):
+for rhoind in range(1):
+    for epsind in range(1):
         rho = 0.4*2**(-rhoind)
         #rho = 0.4*2**(-rhoind)
-        eps = np.round(0.1*0.1**(epsind),5)
+        eps = np.round(0.01*0.1**(epsind),5)
         print('######## NEW RUN, rho = '+str(rho)+', eps = '+str(eps)+' ###############')
         #eps = 0.01*10**(-epsind)
         def eta(t):
@@ -57,7 +57,7 @@ for rhoind in range(3):
         mfe_cn_diff = np.zeros((Am_Nt,))
         for j in range(Am_Nt):
             Nts[j] = 8*2**j
-        res      = np.load('data/errs_rho_'+str(rho)+'_eps_'+str(eps)+'.npy',allow_pickle=True)
+        res      = np.load('data/errs_rho_'+str(rho)+'_eps_'+str(eps)+'_smallNx.npy',allow_pickle=True)
         res = res.item()
         taus     = res['taus']
         cn_errs  = res['cn_errs']

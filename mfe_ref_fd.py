@@ -27,14 +27,15 @@ import matplotlib.pyplot as plt
 #def f(x,t):
 #    t0 = 2
 #    return np.exp(-20*x**2)*np.exp(-10*(t-t0)**2)
-c = 100
-def ui(x):
-    return 0*np.exp(-c*(x-0)**2)
-def vi(x):
-    return 0*2*c*x*np.exp(-c*(x-0)**2)
-def f(x,t):
-    t0 = 2
-    return np.exp(-10000*(x-0.5)**2)*np.exp(-20000*(t-t0)**2)
+
+#c = 100
+#def ui(x):
+#    return 0*np.exp(-c*(x-0)**2)
+#def vi(x):
+#    return 0*2*c*x*np.exp(-c*(x-0)**2)
+#def f(x,t):
+#    t0 = 2
+#    return np.exp(-10000*(x-0.5)**2)*np.exp(-20000*(t-t0)**2)
 
 def td_solver(f,eta,T,Nt,Nx,ui,vi,deg=40,return_sg = False,nx = 200):
     tau = T*1.0/Nt
@@ -55,11 +56,12 @@ def td_solver(f,eta,T,Nt,Nx,ui,vi,deg=40,return_sg = False,nx = 200):
     #RHS = np.zeros((2*Nx,2*Nx))
     source = np.zeros((2*Nx,))
     LHS[:Nx,Nx:2*Nx] = tau**(-1)*M 
-    LHS[Nx:2*Nx,:Nx] = tau**(-1)*M
-    LHS[Nx:2*Nx,Nx:2*Nx] = -1.0/2*M
+    LHS[Nx:2*Nx,:Nx] = -tau**(-1)*M
+    LHS[Nx:2*Nx,Nx:2*Nx] = 1.0/2*M
+
     RHS[:Nx,Nx:2*Nx] = tau**(-1)*M 
-    RHS[Nx:2*Nx,:Nx] = tau**(-1)*M
-    RHS[Nx:2*Nx,Nx:2*Nx] = 0.5*M
+    RHS[Nx:2*Nx,:Nx] = -tau**(-1)*M
+    RHS[Nx:2*Nx,Nx:2*Nx] = -0.5*M
     for j in range(Nt):
         tj = j*tau
         tjp1 = tj+tau
@@ -70,11 +72,16 @@ def td_solver(f,eta,T,Nt,Nx,ui,vi,deg=40,return_sg = False,nx = 200):
         RHS[:Nx,:Nx]     = -0.5*eta(tj)*A
         source[:Nx] = 0.5*(bs[j]+bs[j+1]) 
         sol[:,j+1] = scipy.sparse.linalg.spsolve(LHS.tocsr(), RHS @ sol[:,j]+source)
+       # if j==Nt-1:
+       #     breakpoint()
         #sol[:,j+1] = np.linalg.solve(LHS,np.matmul(RHS,sol[:,j])+source)
     xx = x_g
     tt = np.linspace(0,T,Nt+1)
     #vals = np.zeros((Nx,Nt+1))
     vals = sol[:Nx,:]
+    vals[0,:]=0
+    vals[-1,:]=0
+ 
     #vals = np.array([sol[:Nx,j] for j in range(Nt+1)]).T
     if return_sg:
         return vals,sol,M,A
