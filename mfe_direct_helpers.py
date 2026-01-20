@@ -84,7 +84,8 @@ def make_mfe_sol(rho,eps,Nt,T,Nx,K,f,deg,xx,return_sg=False):
         tj = j*tau
         tjp1 = tj+tau
         #source[K*Nx:(K+1)*Nx] = fvals[j+1]
-        source[(K)*Nx:(K+1)*Nx] = 0.5*rhs[:,j]+0.5*rhs[:,j+1]
+        source[(K-1)*Nx:(K)*Nx] = 0.5*rhs[:,j]+0.5*rhs[:,j+1]
+        source[(K+1)*Nx:(K+2)*Nx] = 0.5*rhs[:,j]+0.5*rhs[:,j+1]
         if j % 1000 == 0:
             1
             #print("Index: "+str(j))

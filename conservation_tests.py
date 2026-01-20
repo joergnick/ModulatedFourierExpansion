@@ -27,13 +27,6 @@ etas = np.zeros((2*K+1,))
 
 #rho = 0.4
 #eps = 0.0001
-def f(x,t):
-    t0 = 1
-    #return np.exp(-10*x**2)*np.exp(-5*(t-t0)**2)
-    a = 100
-    b = 10
-    return np.exp(-a*(x-0.5)**2)*np.exp(-b*(t-t0)**2)-np.exp(-a*(x-0.5)**2)*np.exp(-b*(t-t0-0.1)**2)
-
 xx = np.linspace(0,1,Nx)
 T = 4
 ## Compute reference solution
@@ -48,7 +41,19 @@ Am_Nt = 8
 taus = np.zeros((Am_Nt,))
 rho = 0.4
 #rho = 0.4*2**(-rhoind)
-eps = 0.1
+eps = 0.02
+
+def f(x,t):
+    t0 = 1
+    #return np.exp(-10*x**2)*np.exp(-5*(t-t0)**2)
+    a = 100
+    b = 10
+    return (np.exp(-a*(x-0.5)**2)*np.exp(-b*(t-t0)**2)-np.exp(-a*(x-0.5)**2)*np.exp(-b*(t-t0-0.1)**2))
+
+def feps(x,t):
+    return 2*np.cos(t/eps)*f(x,t)
+
+
 print('######## NEW RUN, rho = '+str(rho)+', eps = '+str(eps)+' ###############')
 #eps = 0.01*10**(-epsind)
 def eta(t):
@@ -79,11 +84,11 @@ for j in range(Am_Nt):
     tau = T*1.0/Nt
     taus[j] = tau
     start = time.time()
-    mfe_dir,z_K_dir = make_mfe_sol_direct(rho,eps,Nt,T,Nx,K,f,-1,xx)
+    mfe_dir,z_K = make_mfe_sol_direct(rho,eps,Nt,T,Nx,K,f,-1,xx)
     end = time.time()
     print("Duration MFE-TR: "+str(end-start))
     start = time.time()
-    CN_vals = td_solver(f,eta,T,Nt,Nx,None,None,deg=-1)
+    CN_vals = td_solver(feps,eta,T,Nt,Nx,None,None,deg=-1)
 
     end = time.time()
     print("Duration TR: "+str(end-start))
@@ -91,7 +96,7 @@ for j in range(Am_Nt):
     Nts[j]  = Nt
     #mfe_vals = mfe_dir
     #z_K = z_K_dir
-    mfe_vals,z_K = make_mfe_sol(rho,eps,Nt,T,Nx,K,f,-1,xx)
+    mfe_vals,z_K_ = make_mfe_sol(rho,eps,Nt,T,Nx,K,f,-1,xx)
    # mfe_errs[j] = 1.0/np.sqrt(Nt*len(xx))*np.linalg.norm(refs[:,::speed]-mfe_vals)
    #
    #  cn_errs[j] = 1.0/np.sqrt(Nt*len(xx))*np.linalg.norm(refs[:,::speed]-CN_vals)
@@ -111,17 +116,17 @@ for j in range(Am_Nt):
     plt.semilogy(tt,np.linalg.norm(mfe_dir-CN_vals,axis = 0)/(np.linalg.norm(CN_vals,axis = 0)+1),label="MFE-Dir, N = "+ str(Nt))
     #plt.legend()
     plt.ylim([1e-10,1e0])
-    print("Difference: ",np.linalg.norm(z_K_dir-z_K))
+    #print("Difference: ",np.linalg.norm(z_K_dir-z_K))
     #plt.plot(ttref,np.linalg.norm(refs,axis = 0),linestyle='dashed')
     #plt.ylim([0,0.5])
    # print('MFE errs: ',mfe_errs)
    # print('CN errs: ',cn_errs)
     plt.savefig('time_plot_mfe.pdf')
     plt.figure(5)
-    plt.semilogy(tt,np.linalg.norm(mfe_vals,axis = 0),label="CN, N = "+ str(Nt))
+    plt.semilogy(tt,np.linalg.norm(mfe_dir,axis = 0),label="CN, N = "+ str(Nt))
     plt.semilogy(tt,np.linalg.norm(CN_vals,axis = 0),label="CN, N = "+ str(Nt),linestyle='dashed')
     plt.savefig('sol.pdf')
-    plt.figure(2,figsize=(12,7))
+    plt.figure(2,figsize=(20,14))
     am_K_plot = 16
     for k_ind in range(am_K_plot):
         plt.subplot(4,4,k_ind+1)
