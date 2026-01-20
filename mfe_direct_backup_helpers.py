@@ -57,7 +57,7 @@ def make_mfe_sol(rho,eps,Nt,T,Nx,K,f,deg,xx,return_sg=False):
     for k in range(2*(2*K+1)):
         RHS[k*Nx,k*Nx]=1
         LHS[k*Nx,k*Nx]=1
-    for k in range(2*(2*K+1)-1):
+    for k in range(2*(2*K+1)):
         RHS[Nx-1+k*Nx,Nx-1+k*Nx]=1
         LHS[Nx-1+k*Nx,Nx-1+k*Nx]=1
     L = 1

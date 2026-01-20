@@ -19,27 +19,31 @@ mpl.rcParams.update({
     "font.serif": ["Computer Modern Roman"],
 })
 
-K = 2
+K = 5
 Nx = 1000
 etas = np.zeros((2*K+1,))
 
 #rho = 0.4
 #eps = 0.0001
+
 def f(x,t):
-    t0 = 2
+    t0 = 1
     #return np.exp(-10*x**2)*np.exp(-5*(t-t0)**2)
     a = 100
     b = 10
-    return np.exp(-a*(x-0.5)**2)*np.exp(-b*(t-t0)**2)-np.exp(-a*(x-0.5)**2)*np.exp(-b*(t-t0-0.1)**2)
+    return (np.exp(-a*(x-0.5)**2)*np.exp(-b*(t-t0)**2)-np.exp(-a*(x-0.5)**2)*np.exp(-b*(t-t0-0.1)**2))
+
+def feps(x,t):
+    return 2*np.cos(t/eps)*f(x,t)
 
 xx = np.linspace(0,1,Nx)
 T = 5
 ## Compute reference solution
 #Ntref = 13*2**7
-Ntref = 2**13
+Ntref = 2**14
 tauref = T*1.0/Ntref
-Am_rho = 1
-Am_eps = 1
+Am_rho = 5
+Am_eps = 5
 perf = np.zeros((Am_rho,Am_eps))
 Am_Nt = 9
 taus = np.zeros((Am_Nt,))
@@ -47,20 +51,20 @@ for rhoind in range(Am_rho):
     for epsind in range(Am_eps):
         rho = 0.4*2**(-rhoind)
         #rho = 0.4*2**(-rhoind)
-        eps = 0.01*10**(-epsind)
+        eps = 0.1*2**(-epsind)
         print('######## NEW RUN, rho = '+str(rho)+', eps = '+str(eps)+' ###############')
         #eps = 0.01*10**(-epsind)
         def eta(t):
             return 1+2*rho*np.cos(t/eps)
         start = time.time()
-        #refs = td_solver(f,eta,T,Ntref,Nx,None,None,deg=50)
+        refs = td_solver(f,eta,T,Ntref,Nx,None,None,deg=50)
         #np.save('data/ref.npy',refs)
         #refs = np.load('data/ref.npy')
         #end   = time.time()
         #print("Duration computation reference solution: ", end-start)
         print("Computed reference solution.")
         Kref = 10
-        refs,z_K = make_mfe_sol(rho,eps,Ntref,T,Nx,K,f,-1,-1)
+        #refs,z_K = make_mfe_sol(rho,eps,Ntref,T,Nx,K,f,-1,-1)
         
         Nts  = np.zeros((Am_Nt,))
         cn_errs = np.zeros((Am_Nt,))
@@ -68,7 +72,7 @@ for rhoind in range(Am_rho):
         mfe_cn_diff = np.zeros((Am_Nt,))
         res = {}
         for j in range(Am_Nt):
-            Nt = 8*2**j
+            Nt = 4*2**j
             print("Computation: "+str(j+1)+" of "+str(Am_Nt)+" N = "+str(Nt))
             tau = T*1.0/Nt
             taus[j] = tau
@@ -78,8 +82,9 @@ for rhoind in range(Am_rho):
             print("Duration TR: "+str(end-start))
 
             start = time.time()
-            rhs = create_rhs(Nt,T,Nx,K,f,precomp = None,deg=-1)
             speed = int(Ntref/Nt)
+            if speed==0:
+                breakpoint()
             Nts[j]  = Nt
             mfe_vals,z_K = make_mfe_sol(rho,eps,Nt,T,Nx,K,f,-1,xx)
             end = time.time()

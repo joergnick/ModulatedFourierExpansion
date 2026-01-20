@@ -54,10 +54,18 @@ def make_mfe_sol(rho,eps,Nt,T,Nx,K,f,deg,xx,return_sg=False):
 
     LHS[::Nx,:] = 0
     LHS[::Nx,:] = 0
+
+    RHS[Nx-1::Nx,:] = 0
+    RHS[:,Nx-1::Nx] = 0
+
+    LHS[Nx-1::Nx,:] = 0
+    LHS[Nx-1::Nx,:] = 0
+ 
+    print("System assembled.")
     for k in range(2*(2*K+1)):
         RHS[k*Nx,k*Nx]=1
         LHS[k*Nx,k*Nx]=1
-    for k in range(2*(2*K+1)-1):
+    for k in range(2*(2*K+1)):
         RHS[Nx-1+k*Nx,Nx-1+k*Nx]=1
         LHS[Nx-1+k*Nx,Nx-1+k*Nx]=1
     L = 1
@@ -67,7 +75,7 @@ def make_mfe_sol(rho,eps,Nt,T,Nx,K,f,deg,xx,return_sg=False):
     z_K = 1j*np.zeros((2*(2*K+1)*Nx,Nt+1))
     rhs = np.array(fvals).T
 
-    source  = np.zeros((2*(2*K+1)*Nx))
+    source  = np.zeros((2*(2*K+1)*Nx,))
     #P,L_LHS,R_LHS = scipy.linalg.lu(LHS)
     LHS_csc = LHS.tocsc()
     RHS_csc = RHS.tocsc()
@@ -76,6 +84,7 @@ def make_mfe_sol(rho,eps,Nt,T,Nx,K,f,deg,xx,return_sg=False):
         shape = LHS_csc.shape,
         matvec = lambda x: ilu.solve(x)
         )
+    print("Preconditioner computed.")
     #P,L_LHS,R_LHS = scipy.linalg.lu(LHS)
     #source  = np.zeros((2*(2*K+1)*Nx,Nt+1))
     #np.sort(np.abs(np.linalg.eigvals(np.linalg.inv(LHS_csc.toarray()@RHS_csc))))
@@ -83,23 +92,23 @@ def make_mfe_sol(rho,eps,Nt,T,Nx,K,f,deg,xx,return_sg=False):
     for j in range(Nt):
         tj = j*tau
         tjp1 = tj+tau
-        #source[K*Nx:(K+1)*Nx] = fvals[j+1]
-        source[(K-1)*Nx:(K)*Nx] = 0.5*rhs[:,j]+0.5*rhs[:,j+1]
-        source[(K+1)*Nx:(K+2)*Nx] = 0.5*rhs[:,j]+0.5*rhs[:,j+1]
+        source[K*Nx:(K+1)*Nx] = 0.5*rhs[:,j]+0.5*rhs[:,j+1]
+        #source[(K-1)*Nx:(K)*Nx] = 0.5*rhs[:,j]+0.5*rhs[:,j+1]
+        #source[(K+1)*Nx:(K+2)*Nx] = 0.5*rhs[:,j]+0.5*rhs[:,j+1]
         if j % 1000 == 0:
             1
             #print("Index: "+str(j))
         #z_K[:,j+1] = scipy.sparse.linalg.spsolve(LHS.tocsr(), RHS @ z_K[:,j]+source)
-        z_K[:,j+1],info = gmres(LHS_csc, RHS_csc @ z_K[:,j]+source,M=prec,tol=1e-8)
+        z_K[:,j+1],info = gmres(LHS_csc, RHS_csc @ z_K[:,j]+source,M=prec,tol=1e-7,maxiter=100)
 
-        z_K[0::Nx,j+1]    = 0
-        z_K[Nx-1::Nx,j+1] = 0
+        #z_K[0::Nx,j+1]    = 0
+        #z_K[Nx-1::Nx,j+1] = 0
 
         #z_K[:,j+1],info = gmres(LHS_csc, RHS_csc @ z_K[:,j]+source,M=prec,tol=1e-8)
         if info != 0:
             print("Linear Algebra issue, breaking.")
-            break
-          
+            z_K[:,j+1] = scipy.sparse.linalg.spsolve(LHS_csc, RHS_csc @ z_K[:,j]+source)
+
         #z_K[:,j+1] = scipy.linalg.solve_triangular(L_LHS , P@(np.matmul(RHS,z_K[:,j])+source),lower=True)
         #z_K[:,j+1] = scipy.linalg.solve_triangular(R_LHS , z_K[:,j+1])
         #z_K[:,j+1] = np.linalg.solve(LHS,np.matmul(RHS,z_K[:,j])+source)
@@ -117,7 +126,6 @@ def make_mfe_sol(rho,eps,Nt,T,Nx,K,f,deg,xx,return_sg=False):
             plt.figure(100)
             plt.spy(RHS)
             plt.savefig("RHS.pdf")
-            #breakpoint()
 
 #           plt.semilogy(np.abs(v_mx))
 #           plt.semilogy(np.abs(It_v_mx))
