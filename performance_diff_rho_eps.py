@@ -51,7 +51,7 @@ for rhoind in range(Am_rho):
     for epsind in range(Am_eps):
         rho = 0.4*2**(-rhoind)
         #rho = 0.4*2**(-rhoind)
-        eps = 0.1*2**(-epsind)
+        eps = 0.04*2**(-epsind)
         print('######## NEW RUN, rho = '+str(rho)+', eps = '+str(eps)+' ###############')
         #eps = 0.01*10**(-epsind)
         def eta(t):
