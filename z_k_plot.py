@@ -21,7 +21,7 @@ mpl.rcParams.update({
 })
 
 K = 10
-Nx = 50
+Nx = 100
 etas = np.zeros((2*K+1,))
 
 #rho = 0.4
@@ -41,16 +41,16 @@ xx = np.linspace(0,1,Nx)
 T = 5
 ## Compute reference solution
 #Ntref = 13*2**7
-Nt = 2**14
+Nt = 2**8
 tauref = T*1.0/Nt
 Am_rho = 2
 Am_eps = 2
 plt.figure()
 for rhoind in range(Am_rho):
     for epsind in range(Am_eps):
-        rho = 0.4*2**(-rhoind)
+        rho = 0.1*10**(-rhoind)
         #rho = 0.4*2**(-rhoind)
-        eps = 0.4*10**(-epsind)
+        eps = 0.1*10**(-epsind)
         filename = 'data/z_K_rho_'+str(rho)+'_eps_'+str(eps)+'.npy'
         if os.path.isfile(filename) and False:
             z_K = np.load(filename)
