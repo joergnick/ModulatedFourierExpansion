@@ -19,7 +19,7 @@ mpl.rcParams.update({
     "font.serif": ["Computer Modern Roman"],
 })
 
-K = 5
+K = 2
 Nx = 1000
 etas = np.zeros((2*K+1,))
 
@@ -58,7 +58,7 @@ for rhoind in range(Am_rho):
             return 1+2*rho*np.cos(t/eps)
         start = time.time()
         refs = td_solver(f,eta,T,Ntref,Nx,None,None,deg=50)
-        #np.save('data/ref.npy',refs)
+        np.save('data/ref.npy',refs)
         #refs = np.load('data/ref.npy')
         #end   = time.time()
         #print("Duration computation reference solution: ", end-start)
