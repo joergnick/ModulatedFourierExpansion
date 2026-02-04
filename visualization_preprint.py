@@ -20,7 +20,7 @@ mpl.rcParams.update({
 })
 
 K = 3
-Nx = 1000
+Nx = 500
 etas = np.zeros((2*K+1,))
 
 #rho = 0.4
@@ -52,7 +52,7 @@ start = time.time()
 #print("Duration computation reference solution: ", end-start)
 #refs,z_K = make_mfe_sol(rho,eps,Ntref,T,Nx,K,f,-1,-1)
 
-Nt = 512
+Nt = 256
 tau = T*1.0/Nt
 
 start = time.time()
