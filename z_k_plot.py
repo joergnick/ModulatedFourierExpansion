@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mfe_direct_helpers import make_mfe_sol
 #from mfe_helpers_finite_differences import create_rhs,time_harmonic_solve,make_mfe_sol
-from cqToolbox.linearcq import Conv_Operator
 
 from mfe_ref_fd import td_solver
 
