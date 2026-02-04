@@ -8,7 +8,6 @@ from scipy.sparse.linalg import LinearOperator,spilu,gmres
 
 from finite_difference_cn_helpers import finite_difference_matrices
 import matplotlib.pyplot as plt
-from cqToolbox.linearcq import Conv_Operator
 # np.sort(np.abs(np.linalg.eigvals(np.linalg.inv(LHS_csc.toarray()@RHS_csc))))
 
 def make_mfe_sol(rho,eps,Nt,T,Nx,K,f,deg,xx,return_sg=False):
