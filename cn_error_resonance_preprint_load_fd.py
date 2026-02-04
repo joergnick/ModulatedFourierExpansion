@@ -17,7 +17,7 @@ mpl.rcParams.update({
     "font.serif": ["Computer Modern Roman"],
 })
 
-K = 2
+K = 5
 Nx = 1000
 etas = np.zeros((2*K+1,))
 
@@ -41,7 +41,7 @@ for rhoind in range(1):
     for epsind in range(1):
         rho = 0.4*2**(-rhoind)
         #rho = 0.4*2**(-rhoind)
-        eps = np.round(0.01*0.1**(epsind),5)
+        eps = np.round(0.04*0.1**(epsind),5)
         print('######## NEW RUN, rho = '+str(rho)+', eps = '+str(eps)+' ###############')
         #eps = 0.01*10**(-epsind)
         def eta(t):

@@ -14,7 +14,6 @@ from cqToolbox.linearcq import Conv_Operator
 def make_mfe_sol(rho,eps,Nt,T,Nx,K,f,deg,xx,return_sg=False):
     tau = T*1.0/Nt
     A,M,Bl,Br = finite_difference_matrices(Nx)
-
     #A = A.toarray()
     #M = M.toarray()
     ## Build system
@@ -99,7 +98,7 @@ def make_mfe_sol(rho,eps,Nt,T,Nx,K,f,deg,xx,return_sg=False):
             1
             #print("Index: "+str(j))
         #z_K[:,j+1] = scipy.sparse.linalg.spsolve(LHS.tocsr(), RHS @ z_K[:,j]+source)
-        z_K[:,j+1],info = gmres(LHS_csc, RHS_csc @ z_K[:,j]+source,M=prec,tol=1e-7,maxiter=100)
+        z_K[:,j+1],info = gmres(LHS_csc, RHS_csc @ z_K[:,j]+source,M=prec,tol=1e-10,maxiter=200)
 
         #z_K[0::Nx,j+1]    = 0
         #z_K[Nx-1::Nx,j+1] = 0

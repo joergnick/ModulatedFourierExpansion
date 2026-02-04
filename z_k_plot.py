@@ -19,9 +19,23 @@ mpl.rcParams.update({
     "font.family": "serif",
     "font.serif": ["Computer Modern Roman"],
 })
-
+plt.rcParams.update({
+    "font.family": "serif",
+    "font.size": 11,
+    "axes.labelsize": 12,
+    "axes.titlesize": 12,
+    "legend.fontsize": 8,
+    "xtick.labelsize": 10,
+    "ytick.labelsize": 10,
+    "lines.linewidth": 1.6,
+    "lines.markersize": 6,
+    "text.usetex": True,
+    "axes.grid": True,
+    "grid.linestyle": ":",
+    "grid.alpha": 0.6,
+})
 K = 10
-Nx = 100
+Nx = 1000
 etas = np.zeros((2*K+1,))
 
 #rho = 0.4
@@ -33,27 +47,31 @@ def f(x,t):
     a = 100
     b = 10
     return (np.exp(-a*(x-0.5)**2)*np.exp(-b*(t-t0)**2)-np.exp(-a*(x-0.5)**2)*np.exp(-b*(t-t0-0.1)**2))
+    #return (np.exp(-a*(x-0.5)**2)*np.exp(-b*(t-t0)**2)-np.exp(-a*(x-0.5)**2)*np.exp(-b*(t-t0-0.1)**2))
 
 def feps(x,t):
     return 2*np.cos(t/eps)*f(x,t)
 
 xx = np.linspace(0,1,Nx)
-T = 5
+T = 4
 ## Compute reference solution
 #Ntref = 13*2**7
-Nt = 2**8
+Nt = 2**11
 tauref = T*1.0/Nt
 Am_rho = 2
 Am_eps = 2
-plt.figure()
+fig, ax = plt.subplots(figsize=(6.0, 4.0))
+mlist=[['o','d'],['p','s']]
+
 for rhoind in range(Am_rho):
     for epsind in range(Am_eps):
-        rho = 0.1*10**(-rhoind)
+        rho = np.round(0.4*10**(-rhoind),5)
         #rho = 0.4*2**(-rhoind)
-        eps = 0.1*10**(-epsind)
+        eps = np.round(0.4*10**(-epsind),5)
         filename = 'data/z_K_rho_'+str(rho)+'_eps_'+str(eps)+'.npy'
         if os.path.isfile(filename) and False:
-            z_K = np.load(filename)
+            z_K_norms = np.load(filename)
+
         else:
             print('######## NEW RUN, rho = '+str(rho)+', eps = '+str(eps)+' ###############')
             def eta(t):
@@ -61,15 +79,47 @@ for rhoind in range(Am_rho):
             start = time.time()
             refs = td_solver(f,eta,T,Nt,Nx,None,None,deg=50)
             mfe_vals,z_K = make_mfe_sol(rho,eps,Nt,T,Nx,K,f,-1,xx)
+            z_K_norms = np.array([1.0/np.sqrt(Nt*Nx)*np.linalg.norm(z_K[k*Nx:(k+1)*Nx,:]) for k in range(2*K+1)])
             print("Error: "+str(np.linalg.norm(refs-mfe_vals)))
+        k = np.arange(0, K + 1)
+        k_ref = np.arange(0, K + 1)
         #### Plotting
-        plt.semilogy(rho**(np.abs(np.arange(-K,K+1,1))),linestyle='dashed')
-        z_K_norms = np.array([1.0/np.sqrt(Nt*Nx)*np.linalg.norm(z_K[k*Nx:(k+1)*Nx,:]) for k in range(2*K+1)])
-        plt.semilogy()
-        plt.semilogy((rho*eps)**(np.abs(np.arange(-K,K+1,1))),linestyle='dashed',label=r"\varepsilon = "+str(eps)+r"\rho = "+str(rho))
+        ax.semilogy(
+            k,
+            z_K_norms[K:],
+            marker=mlist[rhoind][epsind],
+            linestyle='-',
+            label=r"$\|z_k\|$, "+ rf"$\varepsilon={eps},\,\rho={rho}$"
+        )
+        ax.semilogy(
+        k_ref,
+        z_K_norms[K] * (T * rho * eps)**np.abs(k_ref),
+        linestyle='--',
+        marker=mlist[rhoind][epsind],
+        color='black',
+        label=(
+        r"Reference: "
+        r"$ (T \rho \varepsilon)^{k}$, "
+        #rf"$\varepsilon={eps},\,\rho={rho}$" 
+        ))
+        # axis labels
+        ax.set_xlabel(r"Index $k$")
+        ax.set_ylabel(r"$L^2$-norm")
+        
+        # limits
+        ax.set_ylim(1e-18, 1e-1)
+        
+        # legend
+        ax.legend(loc="lower left", frameon=True)
+        
+        # layout
+        fig.tight_layout()
+       # plt.semilogy(z_K_norms[K:])
+       # plt.semilogy(z_K_norms[K]*(T*rho*eps)**(np.abs(np.arange(0,K+1,1))),linestyle='dashed',label=r"\varepsilon = "+str(eps)+r"\rho = "+str(rho))
+       # plt.ylim([1e-15,1e-1])
         np.save(filename,z_K_norms,allow_pickle=True)
-plt.savefig('plots/z_Ks_rho_'+str(rho)+'_eps_'+str(eps)+'.pdf')
- 
+fig.savefig('plots/z_Ks_decay.pdf')
+
         #np.save('data/errs_rho_'+str(rho)+'_eps_'+str(eps)+'_smallNx.npy',res,allow_pickle=True)
       # Paper-ready plot style
 

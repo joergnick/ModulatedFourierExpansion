@@ -19,7 +19,7 @@ mpl.rcParams.update({
     "font.serif": ["Computer Modern Roman"],
 })
 
-K = 2
+K = 3
 Nx = 1000
 etas = np.zeros((2*K+1,))
 
@@ -42,8 +42,8 @@ T = 5
 #Ntref = 13*2**7
 Ntref = 2**14
 tauref = T*1.0/Ntref
-Am_rho = 5
-Am_eps = 5
+Am_rho = 1
+Am_eps = 1
 perf = np.zeros((Am_rho,Am_eps))
 Am_Nt = 9
 taus = np.zeros((Am_Nt,))
