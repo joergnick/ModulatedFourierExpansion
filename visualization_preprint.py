@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mfe_direct_helpers import make_mfe_sol
 #from mfe_helpers_finite_differences import create_rhs,time_harmonic_solve,make_mfe_sol
-from cqToolbox.linearcq import Conv_Operator
 
 from mfe_ref_fd import td_solver
 
@@ -55,13 +54,7 @@ start = time.time()
 Nt = 256
 tau = T*1.0/Nt
 
-start = time.time()
 mfe_vals,z_K = make_mfe_sol(rho,eps,Nt,T,Nx,K,f,-1,xx)
-np.save('data/vissol.npy',mfe_vals)
-np.save('data/viszK.npy',z_K)
-#mfe_vals = np.load('data/vissol.npy')
-#z_K = np.load('data/viszK.npy')
-end = time.time()
 
 extent = [0, 4, 0, 1] 
 plt.figure(0,figsize=(8,4))
