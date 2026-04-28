@@ -88,6 +88,7 @@ def make_mfe_sol(rho,eps,Nt,T,Nx,K,f,deg,xx,return_sg=False):
     #np.sort(np.abs(np.linalg.eigvals(np.linalg.inv(LHS_csc.toarray()@RHS_csc))))
     #Is = np.argsort(np.abs(np.linalg.eigvals(np.linalg.inv(LHS_csc.toarray()@RHS_csc))))
     for j in range(Nt):
+        print("MFE approx, progress: ",j*1.0/Nt)
         tj = j*tau
         tjp1 = tj+tau
         source[K*Nx:(K+1)*Nx] = 0.5*rhs[:,j]+0.5*rhs[:,j+1]
@@ -97,15 +98,16 @@ def make_mfe_sol(rho,eps,Nt,T,Nx,K,f,deg,xx,return_sg=False):
             1
             #print("Index: "+str(j))
         #z_K[:,j+1] = scipy.sparse.linalg.spsolve(LHS.tocsr(), RHS @ z_K[:,j]+source)
-        z_K[:,j+1],info = gmres(LHS_csc, RHS_csc @ z_K[:,j]+source,M=prec,tol=1e-10,maxiter=200)
+        #z_K[:,j+1],info = gmres(LHS_csc, RHS_csc @ z_K[:,j]+source,M=prec,tol=1e-10,maxiter=200)
+        z_K[:,j+1] = scipy.sparse.linalg.spsolve(LHS_csc, RHS_csc @ z_K[:,j]+source)
 
         #z_K[0::Nx,j+1]    = 0
         #z_K[Nx-1::Nx,j+1] = 0
 
         #z_K[:,j+1],info = gmres(LHS_csc, RHS_csc @ z_K[:,j]+source,M=prec,tol=1e-8)
-        if info != 0:
-            print("Linear Algebra issue, breaking.")
-            z_K[:,j+1] = scipy.sparse.linalg.spsolve(LHS_csc, RHS_csc @ z_K[:,j]+source)
+        #if info != 0:
+        #    print("Linear Algebra issue, breaking.")
+        #    z_K[:,j+1] = scipy.sparse.linalg.spsolve(LHS_csc, RHS_csc @ z_K[:,j]+source)
 
         #z_K[:,j+1] = scipy.linalg.solve_triangular(L_LHS , P@(np.matmul(RHS,z_K[:,j])+source),lower=True)
         #z_K[:,j+1] = scipy.linalg.solve_triangular(R_LHS , z_K[:,j+1])

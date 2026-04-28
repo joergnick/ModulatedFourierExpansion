@@ -19,7 +19,7 @@ mpl.rcParams.update({
 })
 
 K = 3
-Nx = 500
+Nx = 1000
 etas = np.zeros((2*K+1,))
 
 #rho = 0.4
